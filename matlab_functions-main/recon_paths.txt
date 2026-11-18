@@ -1,0 +1,6 @@
+/workspace/tengmeng/matlab_functions-main
+/workspace/tengmeng/Reconstruction_program_taichi-master
+/home/tengmeng/miniconda3/envs/tengmeng/bin/python
+**first row is the path of the matlab functions
+**second row is the path of the taichi code
+***Third row is the path of the python program with taichi

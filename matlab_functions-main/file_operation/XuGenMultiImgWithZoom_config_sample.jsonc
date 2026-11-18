@@ -1,0 +1,19 @@
+{
+    "RowNum":4,
+    "ColNum":5,
+    "ImgHeight":150,
+    "ImgWidth":180,
+    "TextPortion":[0.1,0.1],//Row, Col
+    "ImgZoomPosAdj":[0.16,0.1],//Row, Col
+    "TitleCol":["Polynomial","IDEM","Supervised","Proposed","Reference"],
+    "TitleRow":["#1 Iodine","#1 Water","#2 Iodine","#2 Water"],
+    "ImgRatio":0.99,
+    "ImgZoomRatio":0.4,
+    "DisplayRangeArray": [-5,25,800,1200,-5,25,800,1200], // 2*RowNum or only 2 (apply to all images)
+    "CenterCorrArray": [337,265,337,265,337,265,337,265],// 2*RowNum
+    "RoiSizeArray":[60,60,60,60] //RowNum
+
+    //optional: to adjust the window for individual imgs
+    //"IndividualImgWindow":[1,4,0,0.05,2,4,0,0.05,3,4,0,0.05,4,4,0,0.05] // [row_idx,col_idx, range_l, range_h, ...]
+
+}

@@ -1,0 +1,21 @@
+--- /workspace/tengmeng/matlab_functions-main/XuFpjFromTaichi.m.before
++++ /workspace/tengmeng/matlab_functions-main/XuFpjFromTaichi.m
+@@ -13,11 +13,15 @@
+     copyfile([char(recon_paths(1)) '/fpj_from_taichi_v3.py'],'./fpj_temp.py');
+ end
+ if length(recon_paths) == 6
+-    system([char(recon_paths(3)) ' ./fpj_temp.py ' js_file]);
++    command = [char(recon_paths(3)) ' ./fpj_temp.py ' js_file];
+ else
+-    system(['/home/tengmeng/miniconda3/envs/tengmeng/bin/python ./fpj_temp.py ' js_file]);
++    command = ['/home/tengmeng/miniconda3/envs/tengmeng/bin/python ./fpj_temp.py ' js_file];
+ end
++status = system(command);
+ delete ./fpj_temp.py
+ delete ./recon_paths.txt
+-status = 1;
++if status ~= 0
++    error('XuFpjFromTaichi:ProjectionFailed', ...
++        'Forward projection failed (exit status %d). Command: %s',status,command);
++end
+ end

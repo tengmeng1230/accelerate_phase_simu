@@ -1,0 +1,146 @@
+% 
+% // This is a config sample for mgfbp
+% 
+% {
+%   /********************************************************* 
+%   * input and output directory and files
+%   *********************************************************/
+% 
+%   "InputDir": "./sgm",
+%   "OutputDir": "./rec",
+% 
+%   // all the files in the input directory, use regular expression
+%   "InputFiles": "sgm.raw",
+%   // output file name (prefix, replace)
+%   "OutputFilePrefix": "",
+%   // replace substring in input file name
+%   "OutputFileReplace": [ "sgm", "rec" ],
+% 
+%   // save filtered sinogram data
+%   "SaveFilteredSinogram": false,
+% 
+%   /*********************************************************
+% 	* sinogram and slice parameters
+% 	*********************************************************/
+% 
+%   // number of detector elements
+%   "DetectorElementCountHorizontal": 400,
+%   // detector element width [mm]
+%   "DetectorElementWidth": 1,
+% 
+% 
+%   // number of frames
+%   "SinogramHeight": 400,// can be omitted is this number is equal to views
+%   // number of views for reconstruction
+%   "Views": 400,
+%   // number of slices in each sinogram file
+%   "DetectorElementCountVertical": 400,
+%   // detector element height [mm]
+%   "DetectorElementHeight": 1,
+% 
+% 
+%   "TotalScanAngle": 360, // in degree
+% 
+%   "DetectorOffsetHorizontal": 0, //left is positive [mm]
+%   "DetectorOffsetVertical": 0, // up is positive [mm]
+%   "ConeBeam":true,
+% 
+%   //"DetectorOffcenterFile": "xxxx",
+% 
+%   // source to isocenter distance [mm]
+%   "SourceIsocenterDistance": 500,
+%   // (OPTIONAL; for nonuniform SID)
+%   //"SIDFile": "sid_file_sample.jsonc",
+%   // source to detector distance [mm]
+%   "SourceDetectorDistance": 1000,
+%   // (OPTIONAL; for nonuniform SDD)
+%   //"SDDFile": "sdd_file_sample.jsonc",
+% 
+%   /*********************************************************
+% 	* reconstruction parameters
+%   *********************************************************/
+% 
+%   // image dimension (integer)
+%   "ImageDimension": 512,
+%   "ImageDimensionZ": 20,
+% 
+%   /* pixel size or image size, just use one of them */
+% 
+%   // image pixel size [mm]
+%    "PixelSize": 0.4,
+% 
+%    "VoxelHeight": 0.4,
+% 
+%   // image size [mm]
+%   //"ImageSize": 200,
+% 
+% 
+% 
+%   // rotate the image (positive counterclockwise) [degree]
+%   "ImageRotation": 0,
+%   // image center [x(mm), y(mm)]
+%   "ImageCenter": [ 0, 0 ],
+% 
+%   /* reconstruction kernel, avaliable list:
+%   *  1. "HammingFilter": t + (1-t)*cos(pi*k/ 2*kn), 1 for ramp kernel, 0 for consine kernel, others are in-between
+%   *  2. "QuadraticFilter": (for bone-plus kernel) tow parameters for t and h, three parameters for a, b, c
+%   *  3. "Polynomial": an*k^n + ... + a1*k + a0, (n <= 6)
+%   *     (For Bone plus kernel: [ -15.9236, -2.1540, 3.1106, 2.3872, 1.0000 ], rebin detector element to 0.7 mm
+%   *  4. "Hilbert": 1 or -1 (phase contrast, 1 or -1 for right or left direction)
+%   *  5. "Hilbert_angle": temporary test of differential phase contrast along angle direction
+%   *  6.  "GaussianApodizedRamp": delta (delta=1 match MDCT if sinogram pixel size 0.4 mm), Ramp kernel apodized by a gaussian kernel (exp(-n^2/2/delta^2)), delta is in number of pixels
+%   *  7. "Delta": x (x is a number), convolve with a Delta function, the value is x
+%   */
+% 
+%   "HammingFilter": 1,
+% 
+%   // (OPTIONAL) set water mu to convert the pixel values to HU
+%   // unit: mm^-1
+%   "WaterMu": 0.02, 
+% 
+%   "PMatrixFile": "XXX.jsonc",
+% 
+%   "InputFileForm":"post_log_images",
+% 
+%   "OutputFileFormat":"tif",
+% 
+%   "DetectorElementVerticalReconRange":[500,700],
+% 
+%   "BeamHardeningCorrectionCoefficients":[1,0.03,0.02], 
+% 
+%   "ReconViewMode":"Coronal" , // axial coronal or sagittal
+%   "PMatrixDetectorElementHeight" : 0.2, 
+%   "PMatrixDetectorElementWidth" : 0.2,
+%   "SaveModifiedConfigFolder": "config_1.jsonc",
+%   "ModifyPMatrixToStandardForm": true, 
+%   "DetectorElementVerticalGaussFilterSize": 2,
+%   "DBTMode": true
+% }
+
+
+function status = XuReconFromTaichi(js_file,version)
+    recon_paths = importdata('recon_paths.txt');
+    if nargin == 1
+        version = "v1";
+    end
+    copyfile([char(recon_paths(1)) '/recon_paths.txt'],'./recon_paths.txt')
+    if version == "v1"
+        copyfile([char(recon_paths(1)) '/recon_from_taichi.py'],'./recon_temp.py');
+    elseif version == "v2"
+        copyfile([char(recon_paths(1)) '/recon_from_taichi_v2.py'],'./recon_temp.py');
+    elseif version == "offset_test"
+        copyfile([char(recon_paths(1)) '/recon_from_taichi_offset_test.py'],'./recon_temp.py');
+    elseif version == "huashi"
+        copyfile([char(recon_paths(1)) '/recon_from_taichi_huashi.py'],'./recon_temp.py');
+    end
+    if length(recon_paths) == 6
+        system(char([char(recon_paths(3)) ' ./recon_temp.py ' js_file]));
+    else
+        % system(char(['/home/tengmeng/miniconda3/envs/tengmeng/bin/python ./recon_temp.py ' js_file]));
+        system("/home/tengmeng/miniconda3/envs/tengmeng/bin/python ./recon_temp.py " + string(js_file));
+    end
+   
+    delete ./recon_temp.py
+    delete ./recon_paths.txt
+    status = 1;
+end

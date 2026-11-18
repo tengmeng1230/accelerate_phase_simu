@@ -1,0 +1,13 @@
+--- /workspace/tengmeng/matlab_functions-main/phase_contrast_propagation/XuPropagationSimuScale.m.before
++++ /workspace/tengmeng/matlab_functions-main/phase_contrast_propagation/XuPropagationSimuScale.m
+@@ -18,6 +18,10 @@
+ js_fpj.DetectorElementHeight = js_fpj.DetectorElementHeight/js_fpj.Upsampling;
+ js_fpj.DetectorElementCountHorizontal = js_fpj.DetectorElementCountHorizontal*js_fpj.Upsampling;
+ js_fpj.DetectorElementCountVertical = js_fpj.DetectorElementCountVertical*js_fpj.Upsampling;
++% Stream high-resolution projections unless explicitly disabled.
++if ~isfield(js_fpj,'StreamingOutput')
++    js_fpj.StreamingOutput = true;
++end
+ XuStructToJsonc('config_fpj_temp.jsonc',js_fpj);
+ XuFpjFromTaichi('config_fpj_temp.jsonc',"v3");
+ delete 'config_fpj_temp.jsonc'

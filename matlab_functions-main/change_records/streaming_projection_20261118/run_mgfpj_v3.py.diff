@@ -1,0 +1,88 @@
+--- /workspace/tengmeng/Reconstruction_program_taichi-master/run_mgfpj_v3.py.before
++++ /workspace/tengmeng/Reconstruction_program_taichi-master/run_mgfpj_v3.py
+@@ -102,32 +102,51 @@
+                 if self.ReadImage(file):
+                     print('\nForward projecting %s ...' % self.input_path)
+                     self.file_processed_count += 1
+-                    for view_idx in tqdm(range(self.view_num), desc="Forward projecting view #", ncols=80, miniters=50):
+-                        #str = 'Forward projecting view: %4d/%4d' % (view_idx+1, self.view_num)
+-                        #print('\r' + str, end='')
+-                        self.ForwardProjectionBilinear(self.img_image_taichi, self.img_sgm_large_taichi, self.array_u_taichi,
+-                                                       self.array_v_taichi, self.array_angle_taichi, self.img_dim, self.img_dim_z,
+-                                                       self.det_elem_count_horizontal*self.oversample_size,
+-                                                       self.det_elem_count_vertical, self.view_num, self.img_pix_size, self.img_voxel_height,
+-                                                       self.source_isocenter_dis, self.source_det_dis, self.cone_beam,
+-                                                       self.helical_scan, self.helical_pitch, view_idx, self.fpj_step_size,
+-                                                       self.img_center_x, self.img_center_y, self.array_img_center_z_taichi, self.curved_dect,\
+-                                                       self.matrix_A_each_view_taichi,self.x_s_each_view_taichi,self.bool_apply_pmatrix,\
+-                                                       self.det_elem_count_vertical_actual, self.det_elem_vertical_recon_range_begin)
+-
+-                        self.BinSinogram(self.img_sgm_large_taichi, self.img_sgm_taichi,
+-                                         self.det_elem_count_horizontal, self.det_elem_count_vertical, self.oversample_size)
+-                        if self.add_possion_noise:
+-                            self.AddPossionNoise(self.img_sgm_taichi, self.photon_number, self.det_elem_count_horizontal, self.det_elem_count_vertical)
+-
+-                        self.TransferToRAM(view_idx)
++                    if self.streaming_output:
++                        self._stream_path = self.output_path + '.partial'
++                        self._stream_file = open(self._stream_path, 'wb')
++                    try:
++                        for view_idx in tqdm(range(self.view_num), desc="Forward projecting view #", ncols=80, miniters=50):
++                            #str = 'Forward projecting view: %4d/%4d' % (view_idx+1, self.view_num)
++                            #print('\r' + str, end='')
++                            self.ForwardProjectionBilinear(self.img_image_taichi, self.img_sgm_large_taichi, self.array_u_taichi,
++                                                           self.array_v_taichi, self.array_angle_taichi, self.img_dim, self.img_dim_z,
++                                                           self.det_elem_count_horizontal*self.oversample_size,
++                                                           self.det_elem_count_vertical, self.view_num, self.img_pix_size, self.img_voxel_height,
++                                                           self.source_isocenter_dis, self.source_det_dis, self.cone_beam,
++                                                           self.helical_scan, self.helical_pitch, view_idx, self.fpj_step_size,
++                                                           self.img_center_x, self.img_center_y, self.array_img_center_z_taichi, self.curved_dect,\
++                                                           self.matrix_A_each_view_taichi,self.x_s_each_view_taichi,self.bool_apply_pmatrix,\
++                                                           self.det_elem_count_vertical_actual, self.det_elem_vertical_recon_range_begin)
++    
++                            self.BinSinogram(self.img_sgm_large_taichi, self.img_sgm_taichi,
++                                             self.det_elem_count_horizontal, self.det_elem_count_vertical, self.oversample_size)
++                            if self.add_possion_noise:
++                                self.AddPossionNoise(self.img_sgm_taichi, self.photon_number, self.det_elem_count_horizontal, self.det_elem_count_vertical)
++    
++                            self.TransferToRAM(view_idx)
++                    finally:
++                        if self.streaming_output:
++                            self._stream_file.close()
+ 
+                     print('\nSaving to %s !' % self.output_path)
+-                    self.SaveSinogram()
++                    if self.streaming_output:
++                        expected = self.view_num * self.det_elem_count_vertical * self.det_elem_count_horizontal * 4
++                        actual = os.path.getsize(self._stream_path)
++                        if actual != expected:
++                            raise IOError(f'Incomplete projection: expected {expected} bytes, got {actual}')
++                        os.replace(self._stream_path, self.output_path)
++                    else:
++                        self.SaveSinogram()
+ 
+         return self.img_sgm
+ 
+     def __init__(self, config_dict):
++        self.streaming_output = config_dict.get('StreamingOutput', False)
++        if not isinstance(self.streaming_output, bool):
++            raise ValueError('StreamingOutput must be a boolean')
++        if self.streaming_output and config_dict.get('OutputFileForm') != 'post_log_images':
++            raise ValueError('StreamingOutput requires OutputFileForm=post_log_images')
+         super(Mgfpj_v3,self).__init__(config_dict)
+         if 'ScanAngleFile' in config_dict:
+             temp_dict = ReadConfigFile(config_dict['ScanAngleFile'])
+@@ -401,7 +420,12 @@
+ 
+ 
+     def TransferToRAM(self, view_idx):
+-        self.img_sgm[:, view_idx, :] = self.img_sgm_taichi.to_numpy()
++        frame = self.img_sgm_taichi.to_numpy()
++        if self.streaming_output:
++            # Same C-order [view, row, column] layout as SaveSinogram.
++            frame.tofile(self._stream_file)
++        else:
++            self.img_sgm[:, view_idx, :] = frame
+ 
+     @ti.kernel
+     def AddPossionNoise(self, img_sgm_taichi: ti.template(), photon_number: ti.f32, det_elem_count_horizontal: ti.i32,

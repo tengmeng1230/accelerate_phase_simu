@@ -1,0 +1,14 @@
+--- /workspace/tengmeng/Reconstruction_program_taichi-master/run_mgfpj_v2.py.before
++++ /workspace/tengmeng/Reconstruction_program_taichi-master/run_mgfpj_v2.py
+@@ -192,7 +192,10 @@
+         del self.img_recon_taichi
+         del self.img_recon
+         #re-initialize img_sgm with det_elem_count_vertical, not det_elem_count_vertical_actual
+-        self.img_sgm = np.zeros((self.det_elem_count_vertical, self.view_num, self.det_elem_count_horizontal),dtype = np.float32)
++        if getattr(self, 'streaming_output', False):
++            self.img_sgm = None
++        else:
++            self.img_sgm = np.zeros((self.det_elem_count_vertical, self.view_num, self.det_elem_count_horizontal),dtype = np.float32)
+         self.img_image = np.zeros(
+             (self.img_dim_z, self.img_dim, self.img_dim), dtype=np.float32)
+         self.array_u_taichi = ti.field(

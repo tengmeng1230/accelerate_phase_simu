@@ -1,0 +1,82 @@
+24-07-15
+fix a bug in mgfpj:
+ self.array_v_taichi = ti.field(
+            dtype=ti.f32, shape=self.dect_elem_count_horizontal) ->
+ self.array_v_taichi = ti.field(
+            dtype=ti.f32, shape=self.dect_elem_count_vertical)
+
+24-07-17
+else:
+                            temp_sgm_val += 0.0
+
+24-07-24
+run_mgfbp.py:
+Changed definition of array_angle_taichi.
+Now img rotation is included in array_angle_taichi.
+To be consistent with the run_mgfpj.py.
+The back projection function is modified accordingly. 
+
+
+24-08-15
+line 227 fix a bug related to short_scan judgement:
+if abs(self.total_scan_angle % (2 * PI)) < (0.01 / 180 * PI): 
+            self.short_scan = 0
+            print('--Full scan, scan Angle = %.1f degrees' % (self.total_scan_angle / PI * 180))
+        else:
+            self.short_scan = 1
+            print('--Short scan, scan Angle = %.1f degrees' % (self.total_scan_angle / PI * 180))
+previous is self.total_scan_angle %  PI
+
+24-09-09
+add self check of the initilization of the parameters in mgfbp (not finished)
+
+24-09-10
+add self check of the initilization of the parameters in mgfbp (finished)
+
+24-09-18
+Add codes to modify the original pmatrix and output the parameter values from the pmatrix
+If the plane of the source position is not perpendicular to the z-axis
+and the source position of the first view is not located on the +x-axis 
+The original pmatrix need to be modified. 
+
+Add option to save the modified config file: 
+"SaveModifiedConfigName": "config_1.jsonc"
+
+24-09-19
+Previous version has some bugs. Now they are fixed:
+self.dect_offset_vertical = - ((self.dect_elem_count_vertical *self.dect_elem_height / self.pmatrix_elem_height - 1) / 2.0\
+                                       - np.squeeze(v_center_mean)) * self.pmatrix_elem_height
+self.dect_offset_horizontal = ((self.dect_elem_count_horizontal *self.dect_elem_width / self.pmatrix_elem_width - 1) / 2.0\
+                                       - np.squeeze(u_center_mean)) * self.pmatrix_elem_width
+
+if self.short_scan:
+            #update the total scan angle only when the scan is not 360 degree full scan
+            #for 360 degree scan, if total scan angle is updated (e.g. 359.5 degree)
+            #the div_factor calculation in back projection may have problem
+            self.total_scan_angle = total_scan_angle / (self.view_num - 1) * self.view_num
+            print('Total Scan Angle is %.2f degrees.'  %( self.total_scan_angle / PI * 180.0))
+        else:
+            print('Total Scan Angle is not updated for full scan.')
+
+24-09-20
+add "SaveModifiedConfigFolder" option
+parameters from the pmatrix will be saved to this folder
+
+24-09-23
+Add new "run_mgfpj_ver2" code
+This file can process forward projection with pmarix. 
+The code is more concise as the parameters are inherited from run_mgfbp
+however, the code is not fully compatible with mgfpj.exe
+
+24-09-24
+fix bugs related to mgfbp_helical
+
+24-11-07
+unify the definition of array_u and array_v
+array_u is the coordinate along y direction
+array_v is the coordinate along z direction
+ATTENTION: detector offset horizontal is along -y by mgfbp.exe convention. We multiply it by -1 in the program
+
+24-12-01
+fix bug related to modify pmatrix. Now if modify pmatrix is turned off, the detector offset vertical is also read from pmatrix file. 
+For dual source reconstruction, this option should be turned off. 

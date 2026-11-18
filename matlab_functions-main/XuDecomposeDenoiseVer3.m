@@ -1,0 +1,50 @@
+function  [img_1p,img_2p] = XuDecomposeDenoiseVer3(img_l,img_h,roi_map,mu_1,mu_2,eta,lambda,save_folder)
+%img_l img_h are the input dual energy CT images (in mu)
+%roi_map is the roi for std measurement
+%mu_1, mu_2 are mu values for basis materials under low and high energy
+%eta defines the filter pixel radius
+%lambda defines the sigma ratio for ib1 image
+%save folder defines the folder to save the files
+
+sigma_vec = [std(img_l(roi_map>0)),std(img_h(roi_map>0))];
+decompose_matrix = [XuTallVector(mu_1),XuTallVector(mu_2)]^(-1);
+A = decompose_matrix*diag(sigma_vec);
+[U,~,~] = svd(A);
+[img_1,img_2] = XuDecomposeDualEnergy(img_l,img_h,mu_1,mu_2);
+[img_b2, img_b1] = XuBasisRotate(img_1,img_2,U');
+MgMkdir(save_folder);
+MgWriteTiff([save_folder '/img_b1.tif'],img_b1);
+MgWriteTiff([save_folder '/img_b2.tif'],img_b2);
+sigma_ib1 = std(img_b1(roi_map>0));
+
+[mx,my] = meshgrid(1:512,1:512);
+pixel_scope = 2*eta;
+img_b2_denoise = zeros(512,512);
+
+my_roi = my(1:pixel_scope*2+1,1:pixel_scope*2+1);
+mx_roi = mx(1:pixel_scope*2+1,1:pixel_scope*2+1);
+w_d = exp(-((my_roi-pixel_scope -1).^2+(mx_roi-pixel_scope -1).^2)/(pixel_scope/2)^2).*...
+            (((my_roi-pixel_scope -1).^2+(mx_roi-pixel_scope -1).^2)<pixel_scope^2);
+for  row_index = pixel_scope+1:512-pixel_scope-1
+    for col_index = pixel_scope+1:512-pixel_scope-1
+        roi_row_idx = row_index - pixel_scope:row_index+pixel_scope;
+        roi_col_idx = col_index - pixel_scope:col_index+pixel_scope;
+
+        ib1_val = img_b1(row_index,col_index);
+        ib1_roi = img_b1(roi_row_idx,roi_col_idx);
+        ib2_roi = img_b2(roi_row_idx,roi_col_idx);
+        w_ib1 = exp(-(ib1_roi-ib1_val).^2/(lambda*sigma_ib1)^2).*(abs(ib1_roi-ib1_val)<6*lambda*sigma_ib1);
+        w_total = w_d.*w_ib1;
+        img_b2_denoise(row_index,col_index)= XuSum2(ib2_roi.*w_total)/XuSum2(w_total);
+    end
+end
+
+XuWriteRaw([save_folder '/img_b2dn'],img_b2_denoise);
+
+[img_1p,img_2p] = XuBasisRotate(img_b2_denoise,img_b1,U);
+MgWriteTiff([save_folder '/img_1.tif'],img_1);
+MgWriteTiff([save_folder '/img_2.tif'],img_2);
+MgWriteTiff([save_folder '/img_l.tif'],img_l);
+MgWriteTiff([save_folder '/img_h.tif'],img_h);
+MgWriteTiff([save_folder '/img_1_dn.tif'],img_1p);
+MgWriteTiff([save_folder '/img_2_dn.tif'],img_2p);

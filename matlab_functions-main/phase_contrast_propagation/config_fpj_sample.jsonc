@@ -1,0 +1,58 @@
+{
+    //parameters related to the forward projection operation
+    "InputDir": "./phantom",
+    "OutputDir": "./proj",
+    "InputFiles": "phantom_.*.raw",
+    "OutputFilePrefix": "",
+    "OutputFileReplace": [
+        "phantom_",
+        "proj_length_"
+    ],
+    "DetectorElementCountVertical": 100,
+    "DetectorElementCountHorizontal": 512,
+    "Views": 720,
+    "DetectorElementHeight": 0.00202,
+    "DetectorOffsetHorizontal": 0,
+    "DetectorElementWidth": 0.00202,
+    "TotalScanAngle": 360,
+    "SourceIsocenterDistance": 1000,
+    "SourceDetectorDistance": 1010,
+    "ImageDimension": 512,
+    "PixelSize": 0.0015,
+    "ConeBeam": true,
+    "VoxelHeight": 0.0015,
+    "ImageDimensionZ": 101,
+    "GaussianApodizedRamp": 0.1,
+    "ImageRotation": 0,
+    "ImageCenter": [
+        0,
+        0
+    ],
+    "SaveFilteredSinogram": false,
+    "InputFileForm": "sinogram",
+    "OutputFileFormat": "tif",
+    "PMatrixDetectorElementWidth": 0.42,
+    "PMatrixDetectorElementHeight": 0.42,
+    "ImageCenterZ": 0,
+    "ReconViewMode": "axial",
+    "ModifyPMatrixToStandardForm": false,
+    "OutputFileForm": "post_log_images",
+    "VoxelSize": 0.04,
+    "ForwardProjectionStepSize": 0.3,
+
+    //Additional parameters related to the propagation phase simulation
+    "SpectrumFile": "spectrum_mammo_1.txt",
+    "MaterialName": [
+        "bone",
+        "water"
+    ],
+    "DetectorType": 1, //1 for PCD, 2 for EID
+    "PropagationPhotonNumber": 100000, //Number of photons per pixel to calculate the Poisson noise
+    "MaterialDensity": [
+        1.92,
+        1
+    ],
+    "Upsampling": 4,//upsampling rate 
+    "KappaIdx": 1,  //use the kappa value of which material to 
+    "FocalSpotSize": 0.01
+}
